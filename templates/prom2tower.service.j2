@@ -1,0 +1,22 @@
+[Unit]
+Description=prom2tower
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ prom2tower_user }}
+Group={{ prom2tower_group }}
+ExecStart={{ prom2tower_install_path }}/prom2tower -c {{ prom2tower_conf }}
+
+SyslogIdentifier=prom2tower
+Restart=always
+RestartSec=3
+StartLimitInterval=0
+
+ProtectHome=yes
+NoNewPrivileges=yes
+
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+---
+# defaults file for role-prom2tower
+prom2tower_version: "v0.0.1"
+prom2tower_conf_template: "templates/prom2tower.yaml.j2"
+prom2tower_user: "prom2tower"
+prom2tower_group: "prom2tower"
+prom2tower_install_path: "/usr/local/bin"
+prom2tower_log_path: "/var/log/prom2tower"
+prom2tower_conf_path: "/usr/local/etc"
+prom2tower_conf: "{{ prom2tower_conf_path }}/prom2tower.yaml"
+

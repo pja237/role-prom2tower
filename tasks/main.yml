@@ -1,0 +1,84 @@
+---
+# tasks file for role-prom2tower
+- name: Create group
+  group:
+    name: "{{ prom2tower_group }}"
+    state: present
+    system: true
+
+- name: Create user
+  user:
+    name: "{{ prom2tower_user }}"
+    group: "{{ prom2tower_group }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Download release zip
+  get_url:
+    url: "https://github.com/pja237/prom2tower/releases/download/{{ prom2tower_version }}/prom2tower-{{ prom2tower_version }}.zip"
+    dest: "/tmp"
+  delegate_to: localhost
+
+- name: Unarchive zip
+  unarchive:
+    src: "/tmp/prom2tower-{{ prom2tower_version }}.zip"
+    dest: "/tmp"
+    creates: "/tmp/prom2tower"
+    include: "prom2tower"
+    owner: "{{ prom2tower_user }}"
+    group: "{{ prom2tower_group }}"
+    mode: 0755
+    remote_src: true
+  delegate_to: localhost
+
+- name: Copy executable to target
+  copy:
+    src: "/tmp/prom2tower"
+    dest: "{{ prom2tower_install_path }}"
+    owner: "{{ prom2tower_user }}"
+    group: "{{ prom2tower_group }}"
+    mode: 0755
+    remote_src: false
+  notify: 
+    - restart prom2tower
+
+- name: Create log directory
+  file:
+    state: directory
+    path: "{{ prom2tower_log_path }}"
+    owner: "{{ prom2tower_user }}"
+    group: "{{ prom2tower_group }}"
+    mode: 0750
+
+- name: Template config file
+  template:
+    src: "{{ prom2tower_conf_template }}"
+    dest: "{{ prom2tower_conf }}"
+    owner: "root"
+    group: "{{ prom2tower_group }}"
+    mode: 0750
+    variable_start_string: '[%'
+    variable_end_string: '%]'
+  notify:
+    - restart prom2tower
+
+- name: Template prom2tower.service
+  template:
+    src: "templates/prom2tower.service.j2"
+    dest: "/etc/systemd/system/prom2tower.service"
+    owner: "root"
+    group: "root"
+    mode: 0644
+    backup: true
+  notify:
+    - restart prom2tower
+
+- name: Enable and start service
+  become: true
+  systemd:
+    daemon_reload: true
+    name: prom2tower
+    enabled: true
+    state: started
+
